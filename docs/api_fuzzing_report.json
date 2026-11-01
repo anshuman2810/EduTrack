@@ -1,0 +1,63 @@
+{
+  "suite_name": "EduTrack QR API Fault Injection & Fuzzing Assessment",
+  "timestamp": "2026-11-01T14:25:07.930778+00:00",
+  "total_tests": 5,
+  "vulnerabilities_confirmed": 5,
+  "test_cases": [
+    {
+      "test_id": "FUZZ-01",
+      "target_endpoint": "GET /api/students?search=",
+      "input_payload": "((a+)+)+$ (Catastrophic Backtracking ReDoS string)",
+      "test_category": "Regular Expression Denial of Service",
+      "expected_behavior": "Input sanitized or rejected before RegExp compilation",
+      "observed_behavior_v0": "Server single-thread event loop blocks at 100% CPU when executed with 25+ repetitions",
+      "status": "Vulnerable / True Positive",
+      "cwe": "CWE-1333",
+      "severity": "High"
+    },
+    {
+      "test_id": "FUZZ-02",
+      "target_endpoint": "GET /api/students/:id",
+      "input_payload": "/api/students/invalid-non-hex-object-id-string",
+      "test_category": "Type Confusion / Malformed ObjectID",
+      "expected_behavior": "Graceful 400 Bad Request with standardized error message",
+      "observed_behavior_v0": "Mongoose CastError triggers global unhandled error handler emitting raw stack trace",
+      "status": "Vulnerable / True Positive",
+      "cwe": "CWE-209",
+      "severity": "Medium"
+    },
+    {
+      "test_id": "FUZZ-03",
+      "target_endpoint": "POST /api/attendance/bulk",
+      "input_payload": "JSON array containing 50,000 synthetic student items",
+      "test_category": "Unbounded Array / Resource Exhaustion",
+      "expected_behavior": "Enforce strict batch array limit (e.g. max 100 entries per request)",
+      "observed_behavior_v0": "Server attempts to construct 50,000 bulkWrite operations, leading to heap memory bloat and connection timeout",
+      "status": "Vulnerable / True Positive",
+      "cwe": "CWE-400",
+      "severity": "Medium"
+    },
+    {
+      "test_id": "FUZZ-04",
+      "target_endpoint": "POST /api/students",
+      "input_payload": "{\"studentId\": \"STU999\", \"__proto__\": {\"isAdmin\": true}, \"status\": \"Active\"}",
+      "test_category": "Mass Assignment & Prototype Injection Probe",
+      "expected_behavior": "Strict schema validation whitelisting only defined fields (Zod/Joi)",
+      "observed_behavior_v0": "Mongoose rejects __proto__ by default (mitigated), but accepts arbitrary unexpected schema keys via req.body",
+      "status": "Vulnerable / True Positive (Mass Assignment)",
+      "cwe": "CWE-915",
+      "severity": "Medium"
+    },
+    {
+      "test_id": "FUZZ-05",
+      "target_endpoint": "POST /api/students (File Upload)",
+      "input_payload": "malicious.svg containing <script>alert(1)</script> with Content-Type: image/png",
+      "test_category": "MIME-Type Confusion & Stored XSS",
+      "expected_behavior": "Magic byte file signature inspection & image re-encoding",
+      "observed_behavior_v0": "Upload middleware inspects only client header and file extension, saving payload to /backend/uploads/",
+      "status": "Vulnerable / True Positive",
+      "cwe": "CWE-434",
+      "severity": "High"
+    }
+  ]
+}
