@@ -8,7 +8,7 @@ const Mark = require('../models/Mark');
 const User = require('../models/User');
 const Feedback = require('../models/Feedback');
 const AcademicYear = require('../models/AcademicYear');
-const upload = require('../middleware/uploadMiddleware');
+const { upload, verifyImageMagicBytes } = require('../middleware/uploadMiddleware');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 // @route   GET /api/students
@@ -30,8 +30,12 @@ router.get('/', protect, async (req, res) => {
     if (status) {
       studentQuery.status = status;
     }
-    if (search) {
-      const searchRegex = new RegExp(search.trim(), 'i');
+    if (search && typeof search === 'string') {
+      // SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-11 / PoC-06)
+      // Escape regex special characters to prevent ReDoS, wildcard injection, and SyntaxError crashes
+      const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const sanitizedSearch = escapeRegex(search.trim());
+      const searchRegex = new RegExp(sanitizedSearch, 'i');
       studentQuery.$or = [
         { firstName: searchRegex },
         { lastName: searchRegex },
@@ -109,6 +113,7 @@ router.post(
   protect,
   authorize('admin'),
   upload.single('photo'),
+  verifyImageMagicBytes,
   async (req, res) => {
     try {
       const studentData = req.body;
@@ -212,6 +217,24 @@ router.get('/:id', protect, async (req, res) => {
       return res.status(404).json({ message: 'Student not found' });
     }
 
+    // SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-07 / PoC-01):
+    // Object-Level Access Control (BOLA/IDOR Defense)
+    // Enforce that Parent users can only view profiles of their own registered children
+    if (req.user.role === 'parent') {
+      const parentId = req.user._id.toString();
+      const studentParentId = student.parentUser ? student.parentUser._id.toString() : null;
+      const isLinkedChild =
+        req.user.students &&
+        req.user.students.some((s) => s.toString() === student._id.toString());
+
+      if (studentParentId !== parentId && !isLinkedChild) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access Denied: You are not authorized to view another student\'s records.',
+        });
+      }
+    }
+
     // Fetch all academic records across all years
     const academicHistory = await StudentAcademicRecord.find({ student: student._id })
       .populate('academicYear', 'name isCurrent startDate endDate')
@@ -268,6 +291,7 @@ router.put(
   protect,
   authorize('admin', 'teacher'),
   upload.single('photo'),
+  verifyImageMagicBytes,
   async (req, res) => {
     try {
       const student = await Student.findById(req.params.id);
@@ -452,6 +476,24 @@ router.get('/:id/qr', protect, async (req, res) => {
     const student = await Student.findById(req.params.id);
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
+    }
+
+    // SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-07 / PoC-01):
+    // Object-Level Access Control (BOLA/IDOR Defense)
+    // Enforce that Parent users can only view profiles of their own registered children
+    if (req.user.role === 'parent') {
+      const parentId = req.user._id.toString();
+      const studentParentId = student.parentUser ? student.parentUser._id.toString() : null;
+      const isLinkedChild =
+        req.user.students &&
+        req.user.students.some((s) => s.toString() === student._id.toString());
+
+      if (studentParentId !== parentId && !isLinkedChild) {
+        return res.status(403).json({
+          success: false,
+          message: 'Access Denied: You are not authorized to view another student\'s records.',
+        });
+      }
     }
 
     const host = req.get('host');

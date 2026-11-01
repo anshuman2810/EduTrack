@@ -23,8 +23,8 @@ const computeGrade = (obtained, max) => {
 
 // @route   GET /api/marks/exam/:examId
 // @desc    Get all students with their marks for a specific exam (for batch grading)
-// @access  Private
-router.get('/exam/:examId', protect, async (req, res) => {
+// @access  Private (Teacher or Admin only - RBAC Hardening - OBS-08 / PoC-04)
+router.get('/exam/:examId', protect, authorize('teacher', 'admin'), async (req, res) => {
   try {
     const { examId } = req.params;
     const { sectionId } = req.query;

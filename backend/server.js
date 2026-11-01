@@ -7,18 +7,61 @@ const connectDB = require('./config/db');
 // Load environment variables
 dotenv.config();
 
+// SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION): Fail-fast verification of cryptographic secret
+if (!process.env.JWT_SECRET) {
+  console.error('FATAL SECURITY ERROR: JWT_SECRET environment variable is not defined.');
+  console.error('Application will not start without a cryptographically secure key.');
+  process.exit(1);
+}
+
 // Connect to MongoDB
 connectDB();
 
 const app = express();
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// SECURITY HARDENING: Disable framework fingerprinting
+app.disable('x-powered-by');
 
-// Serve uploaded static files
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// SECURITY HARDENING: Enforce institutional security headers (OWASP ASVS / NIST SSDF)
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
+
+// SECURITY HARDENING: Restrictive CORS Policy (Replaces insecure wildcard *)
+const allowedOrigins = [
+  process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  'http://127.0.0.1:5173',
+];
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, or Postman in local lab)
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Blocked by CORS policy: Origin not allowed'));
+      }
+    },
+    credentials: true,
+  })
+);
+
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+
+// Serve uploaded static files with strict nosniff header
+app.use(
+  '/uploads',
+  (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    next();
+  },
+  express.static(path.join(__dirname, 'uploads'))
+);
 
 // API Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -40,12 +83,32 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Error handling middleware (Human Remediation: Prevent Stack & Schema Leakage - OBS-17)
 app.use((err, req, res, next) => {
   console.error('Unhandled server error:', err);
+
+  // Mongoose CastError (Invalid ObjectId format)
+  if (err.name === 'CastError') {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid resource identifier format.',
+    });
+  }
+
+  // CORS rejection
+  if (err.message && err.message.includes('CORS policy')) {
+    return res.status(403).json({
+      success: false,
+      message: 'Cross-Origin Request Blocked: Origin not authorized.',
+    });
+  }
+
   res.status(err.status || 500).json({
-    message: err.message || 'Internal Server Error',
-    stack: process.env.NODE_ENV === 'production' ? null : err.stack,
+    success: false,
+    message:
+      process.env.NODE_ENV === 'production'
+        ? 'An unexpected internal error occurred.'
+        : err.message || 'Internal Server Error',
   });
 });
 

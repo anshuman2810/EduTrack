@@ -103,9 +103,14 @@ router.get('/verify/:qrToken', async (req, res) => {
       else overallGrade = 'F';
     }
 
+    // SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-14 / PoC-02)
+    // Principle of Data Minimization (DPDP Act 2023 / NIST SP 800-218)
+    // Public unauthenticated QR scan returns ONLY sanitized badge verification metadata
+    // Strips all sensitive PII (Aadhaar, home address, parent contacts, exam marks)
     res.json({
       success: true,
       verifiedAt: new Date(),
+      isPublicVerification: true,
       student: {
         _id: student._id,
         studentId: student.studentId,
@@ -115,36 +120,22 @@ router.get('/verify/:qrToken', async (req, res) => {
         firstName: student.firstName,
         lastName: student.lastName,
         fullName: `${student.firstName} ${student.lastName}`,
-        dateOfBirth: student.dateOfBirth,
         gender: student.gender,
-        bloodGroup: student.bloodGroup,
+        bloodGroup: student.bloodGroup || 'Unknown',
         photo: student.photo,
-        email: student.email,
-        phone: student.phone,
-        address: student.address,
-        emergencyContact: student.emergencyContact,
-        parentInfo: student.parentInfo,
         status: student.status,
-        aadhaarNumber: student.aadhaarNumber,
-        nationality: student.nationality,
       },
-      availableAcademicYears: allRecords.map((r) => ({
-        academicYearId: r.academicYear?._id,
-        academicYearName: r.academicYear?.name,
-        className: r.class?.name,
-        sectionName: r.section?.name,
-        isCurrent: r.isCurrentYear,
-      })),
-      selectedAcademicRecord: selectedRecord,
-      attendanceSummary,
-      examMarks,
-      performance: {
-        totalMarksObtained,
-        totalMaxMarks,
-        overallPercentage,
-        overallGrade,
-        totalExams: examMarks.length,
-      },
+      currentClass: selectedRecord
+        ? {
+            className: selectedRecord.class?.name || 'Standard 10',
+            sectionName: selectedRecord.section?.name || 'Section A',
+            academicYearName: selectedRecord.academicYear?.name || 'Academic Year 2025-2026',
+          }
+        : null,
+      verificationStatus:
+        student.status === 'Active' ? 'VERIFIED_ACTIVE_STUDENT' : 'STATUS_INACTIVE_OR_SUSPENDED',
+      privacyNotice:
+        'Sensitive government identifiers, residential records, and academic grade sheets are restricted under DPDP Act 2023 compliance and require authenticated portal login.',
     });
   } catch (error) {
     console.error('QR verify error:', error);
