@@ -42,6 +42,20 @@ router.post('/', protect, async (req, res) => {
   try {
     const { studentId, teacherId, subjectId, academicYearId, category, rating, message } = req.body;
 
+    // SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-09):
+    // Object-Level Authorization: Parents can only submit feedback for their registered children
+    if (req.user.role === 'parent') {
+      const isLinkedChild =
+        req.user.students &&
+        req.user.students.some((s) => s.toString() === (studentId || '').toString());
+
+      if (!isLinkedChild) {
+        return res.status(403).json({
+          message: 'Access Denied: You are only authorized to submit feedback for your own registered children.',
+        });
+      }
+    }
+
     const feedback = new Feedback({
       parent: req.user.role === 'parent' ? req.user._id : req.body.parentId || req.user._id,
       student: studentId,

@@ -2,7 +2,13 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/student_portal_db';
+    // SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-15):
+    // Strict environment variable configuration; zero hardcoded fallback credentials!
+    const mongoURI = process.env.MONGODB_URI;
+    if (!mongoURI) {
+      console.error('FATAL CONFIGURATION ERROR: MONGODB_URI environment variable is not defined.');
+      process.exit(1);
+    }
     const conn = await mongoose.connect(mongoURI);
     console.log(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {

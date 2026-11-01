@@ -155,8 +155,32 @@ router.post(
         });
       }
 
-      // Create Student
-      const student = new Student(studentData);
+      // SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-12):
+      // Mass Assignment Protection: Whitelist permitted schema properties
+      const sanitizedStudent = {
+        studentId: studentData.studentId,
+        admissionNumber: studentData.admissionNumber,
+        admissionDate: studentData.admissionDate || new Date(),
+        firstName: studentData.firstName ? studentData.firstName.trim() : '',
+        lastName: studentData.lastName ? studentData.lastName.trim() : '',
+        dateOfBirth: studentData.dateOfBirth,
+        gender: studentData.gender,
+        bloodGroup: studentData.bloodGroup || 'Unknown',
+        email: studentData.email ? studentData.email.trim().toLowerCase() : '',
+        phone: studentData.phone ? studentData.phone.trim() : '',
+        aadhaarNumber: studentData.aadhaarNumber ? studentData.aadhaarNumber.trim() : '',
+        nationality: studentData.nationality || 'Indian',
+        religion: studentData.religion || '',
+        category: studentData.category || 'General',
+        address: studentData.address || {},
+        emergencyContact: studentData.emergencyContact || {},
+        parentInfo: studentData.parentInfo || {},
+        parentUser: studentData.parentUser || null,
+        photo: studentData.photo || '',
+        status: studentData.status || 'Active',
+      };
+
+      const student = new Student(sanitizedStudent);
       const savedStudent = await student.save();
 
       // Create initial StudentAcademicRecord if academic details were provided

@@ -1,6 +1,14 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+// SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-03):
+// Server-Side Token Revocation Blacklist
+const revokedTokens = new Set();
+
+const blacklistToken = (token) => {
+  if (token) revokedTokens.add(token);
+};
+
 const protect = async (req, res, next) => {
   let token;
 
@@ -10,6 +18,11 @@ const protect = async (req, res, next) => {
   ) {
     try {
       token = req.headers.authorization.split(' ')[1];
+
+      // Verify token has not been revoked (OBS-03)
+      if (revokedTokens.has(token)) {
+        return res.status(401).json({ message: 'Token has been revoked. Please log in again.' });
+      }
 
       // SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-16)
       // Strict verification using environment variable secret only; zero fallback defaults!
@@ -51,4 +64,4 @@ const authorize = (...roles) => {
   };
 };
 
-module.exports = { protect, authorize };
+module.exports = { protect, authorize, blacklistToken };

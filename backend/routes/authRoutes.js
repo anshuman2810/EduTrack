@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, blacklistToken } = require('../middleware/authMiddleware');
 
 // SECURE VERSION 1 (WEEK 6 HUMAN REMEDIATION - OBS-16 & OBS-02)
 // Enforce environment-only secret and reasonable expiration lifetime (8 hours instead of 30 days)
@@ -193,6 +193,22 @@ router.put('/profile', protect, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Server error updating profile', error: error.message });
+  }
+});
+
+// @route   POST /api/auth/logout
+// @desc    Revoke current authentication token (Server-Side Logout - OBS-03)
+// @access  Private
+router.post('/logout', protect, (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      blacklistToken(token);
+    }
+    res.json({ success: true, message: 'Logged out successfully. Token revoked.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error processing logout', error: error.message });
   }
 });
 
