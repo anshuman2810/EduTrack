@@ -1,0 +1,44 @@
+3. Step-by-Step Setup: How to Set This Up
+
+When you are ready to begin Week 6, execute these simple Git commands:
+
+Step A: Freeze and Preserve Version 0 Right Now
+
+Run these commands to permanently tag and branch your current frozen codebase:
+
+powershell
+# 1. Create a permanent tag for Version 0
+git tag -a v0.0.0-vulnerable -m "Version 0: AI-generated unpatched baseline (Weeks 1-5)"
+# 2. Create the dedicated Version 0 branch
+git branch v0-vulnerable
+Step B: Create and Switch to Version 1 for Week 6 Work
+powershell
+# 3. Create and switch to the Week 6 manual remediation branch
+git checkout -b v1-manual-remediation
+
+All your manual code patches for Week 6 will be written and committed strictly on this branch.
+
+Step C: When Week 6 Is Completed
+powershell
+# Commit your human fixes and tag Version 1
+git add .
+git commit -m "Complete Week 6: Human manual security remediation (Secure Version 1)"
+git tag -a v1.0.0-manual -m "Version 1: Human-led manual remediation (Week 6)"
+Step D: Transition to Week 7 (Version 2)
+
+When Week 7 begins:
+
+powershell
+# Branch off Version 1 to create Version 2 for automated fixes
+git checkout -b v2-final-secure
+# (Run npm audit fix, add helmet headers, re-test all tools)
+git tag -a v2.0.0-final -m "Version 2: Final secure application (Week 7)"
+4. Advanced Option: Running Version 0 and Version 1 Side-by-Side (git worktree)
+
+If during your presentation you want to have both versions running on your computer at the exact same time on different ports (e.g. Version 0 on port 5000 and Version 1 on port 5001) without switching branches, Git has a built-in feature called Worktrees:
+
+powershell
+# Creates a parallel folder linked to the same git repository
+git worktree add ../edutrack-v0-vulnerable v0-vulnerable
+
+This creates a separate folder containing the vulnerable code, so you can keep both servers running simultaneously without any branch switching.
