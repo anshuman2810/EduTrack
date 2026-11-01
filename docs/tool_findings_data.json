@@ -1,0 +1,176 @@
+{
+  "secret_findings": [
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-02",
+      "finding": "Hardcoded Local MongoDB Connection URI",
+      "severity": "Medium",
+      "cwe": "CWE-798",
+      "location": "backend\\config\\db.js:5",
+      "snippet": "const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/student_portal_db';",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-01",
+      "finding": "Hardcoded JWT Secret String",
+      "severity": "High",
+      "cwe": "CWE-798",
+      "location": "backend\\middleware\\authMiddleware.js:15",
+      "snippet": "process.env.JWT_SECRET || 'student_portal_jwt_secret_key_2026'",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-01",
+      "finding": "Hardcoded JWT Secret String",
+      "severity": "High",
+      "cwe": "CWE-798",
+      "location": "backend\\routes\\authRoutes.js:10",
+      "snippet": "process.env.JWT_SECRET || 'student_portal_jwt_secret_key_2026',",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-02",
+      "finding": "Hardcoded Local MongoDB Connection URI",
+      "severity": "Medium",
+      "cwe": "CWE-798",
+      "location": "backend\\seed\\seedData.js:21",
+      "snippet": "const mongoURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/student_portal_db';",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-03",
+      "finding": "Hardcoded Default Account Password",
+      "severity": "High",
+      "cwe": "CWE-521",
+      "location": "backend\\seed\\seedData.js:95",
+      "snippet": "password: 'Admin@123',",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-03",
+      "finding": "Hardcoded Default Account Password",
+      "severity": "High",
+      "cwe": "CWE-521",
+      "location": "backend\\seed\\seedData.js:105",
+      "snippet": "password: 'Teacher@123',",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-03",
+      "finding": "Hardcoded Default Account Password",
+      "severity": "High",
+      "cwe": "CWE-521",
+      "location": "backend\\seed\\seedData.js:117",
+      "snippet": "password: 'Teacher@123',",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-03",
+      "finding": "Hardcoded Default Account Password",
+      "severity": "High",
+      "cwe": "CWE-521",
+      "location": "backend\\seed\\seedData.js:129",
+      "snippet": "password: 'Teacher@123',",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-03",
+      "finding": "Hardcoded Default Account Password",
+      "severity": "High",
+      "cwe": "CWE-521",
+      "location": "backend\\seed\\seedData.js:229",
+      "snippet": "password: 'Parent@123',",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Gitleaks (Secret Scanner)",
+      "rule_id": "SEC-03",
+      "finding": "Hardcoded Default Account Password",
+      "severity": "High",
+      "cwe": "CWE-521",
+      "location": "backend\\seed\\seedData.js:241",
+      "snippet": "password: 'Parent@123',",
+      "is_true_positive": true
+    }
+  ],
+  "sast_findings": [
+    {
+      "tool": "Semgrep (SAST)",
+      "rule_id": "SAST-03",
+      "finding": "javascript.express.security.audit.x-powered-by",
+      "severity": "Low",
+      "cwe": "CWE-200",
+      "location": "backend\\server.js:13",
+      "snippet": "const app = express();",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Semgrep (SAST)",
+      "rule_id": "SAST-02",
+      "finding": "javascript.express.security.audit.cors.wildcard",
+      "severity": "Medium",
+      "cwe": "CWE-942",
+      "location": "backend\\server.js:16",
+      "snippet": "app.use(cors());",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Semgrep (SAST)",
+      "rule_id": "SAST-04",
+      "finding": "javascript.express.security.error.stack-trace-leak",
+      "severity": "Medium",
+      "cwe": "CWE-209",
+      "location": "backend\\server.js:48",
+      "snippet": "stack: process.env.NODE_ENV === 'production' ? null : err.stack,",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Semgrep (SAST)",
+      "rule_id": "SAST-05",
+      "finding": "javascript.node.security.unrestricted-upload-mimetype",
+      "severity": "High",
+      "cwe": "CWE-434",
+      "location": "backend\\middleware\\uploadMiddleware.js:27",
+      "snippet": "const mimetype = allowedTypes.test(file.mimetype);",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Semgrep (SAST)",
+      "rule_id": "SAST-07",
+      "finding": "javascript.express.security.unverified-password-update",
+      "severity": "High",
+      "cwe": "CWE-620",
+      "location": "backend\\routes\\authRoutes.js:106",
+      "snippet": "user.password = req.body.password;",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Semgrep (SAST)",
+      "rule_id": "SAST-01",
+      "finding": "javascript.node.security.detect-non-literal-regexp (ReDoS)",
+      "severity": "High",
+      "cwe": "CWE-1333",
+      "location": "backend\\routes\\studentRoutes.js:34",
+      "snippet": "const searchRegex = new RegExp(search.trim(), 'i');",
+      "is_true_positive": true
+    },
+    {
+      "tool": "Semgrep (SAST)",
+      "rule_id": "SAST-06",
+      "finding": "javascript.express.security.mass-assignment",
+      "severity": "Medium",
+      "cwe": "CWE-915",
+      "location": "backend\\routes\\studentRoutes.js:154",
+      "snippet": "const student = new Student(studentData);",
+      "is_true_positive": true
+    }
+  ]
+}
