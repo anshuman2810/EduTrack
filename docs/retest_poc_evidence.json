@@ -1,0 +1,129 @@
+{
+  "test_run": {
+    "course": "CS-601 Data Security & Privacy",
+    "milestone": "Week 7 Automated Remediation & Re-testing",
+    "git_branch": "v2-final-secure",
+    "version": "Secure Version 2.0.0",
+    "timestamp": "2026-11-02T02:37:00+05:30",
+    "total_pocs_tested": 6,
+    "total_pocs_neutralized": 6,
+    "success_rate_percentage": 100.0
+  },
+  "poc_retest_results": [
+    {
+      "poc_id": "PoC-01",
+      "vulnerability_ref": "OBS-07",
+      "title": "Broken Object Level Authorization (BOLA/IDOR) on Student Records",
+      "target_endpoint": "GET /api/students/:id",
+      "cwe": "CWE-639",
+      "version_0_behavior": {
+        "http_status": 200,
+        "payload_exposed": true,
+        "result": "Parent token successfully retrieved unrelated student record (cross-tenant access)."
+      },
+      "version_2_behavior": {
+        "http_status": 403,
+        "payload_exposed": false,
+        "response_message": "Access Denied: You are not authorized to view another student's records.",
+        "result": "Object-level ownership validation enforced; alien child records blocked."
+      },
+      "verification_status": "NEUTRALIZED_AND_VERIFIED"
+    },
+    {
+      "poc_id": "PoC-02",
+      "vulnerability_ref": "OBS-14",
+      "title": "Public QR Dynamic Badge Sensitive PII Leakage",
+      "target_endpoint": "GET /api/qr/verify/:token",
+      "cwe": "CWE-200",
+      "version_0_behavior": {
+        "http_status": 200,
+        "payload_exposed": true,
+        "result": "Public unauthenticated QR scan returned 12-digit Aadhaar, residential address, parent phone, and exam marks."
+      },
+      "version_2_behavior": {
+        "http_status": 200,
+        "payload_exposed": false,
+        "response_dto": "Sanitized Public Verification DTO (Photo, Full Name, Student ID, Class, Status)",
+        "privacy_guarantee": "Aadhaar, home address, and academic grades stripped under DPDP Act 2023 compliance.",
+        "result": "Data Minimization DTO active; sensitive PII redacted from public view."
+      },
+      "verification_status": "NEUTRALIZED_AND_VERIFIED"
+    },
+    {
+      "poc_id": "PoC-03",
+      "vulnerability_ref": "OBS-16",
+      "title": "Hardcoded JWT Fallback Secret Token Forgery",
+      "target_endpoint": "POST /api/students & All Protected Endpoints",
+      "cwe": "CWE-798",
+      "version_0_behavior": {
+        "http_status": 200,
+        "payload_exposed": true,
+        "result": "Offline-forged JWT signed with static fallback key 'secret' accepted as Administrator."
+      },
+      "version_2_behavior": {
+        "http_status": 401,
+        "payload_exposed": false,
+        "response_message": "Not authorized, token failed verification.",
+        "result": "Hardcoded fallbacks eliminated; server startup aborted if default key used; 256-bit CSPRNG key in .env invalidates forged token."
+      },
+      "verification_status": "NEUTRALIZED_AND_VERIFIED"
+    },
+    {
+      "poc_id": "PoC-04",
+      "vulnerability_ref": "OBS-08",
+      "title": "Class Scorecard Horizontal Snooping",
+      "target_endpoint": "GET /api/marks/exam/:examId",
+      "cwe": "CWE-284",
+      "version_0_behavior": {
+        "http_status": 200,
+        "payload_exposed": true,
+        "result": "Parent token successfully retrieved entire class grade sheet, marks, and peer rankings."
+      },
+      "version_2_behavior": {
+        "http_status": 403,
+        "payload_exposed": false,
+        "response_message": "Access Denied: User role 'parent' is not authorized to access this route.",
+        "result": "RBAC authorize('teacher', 'admin') enforced; parent tokens rejected."
+      },
+      "verification_status": "NEUTRALIZED_AND_VERIFIED"
+    },
+    {
+      "poc_id": "PoC-05",
+      "vulnerability_ref": "OBS-13",
+      "title": "Insecure File Upload via Client MIME Type Spoofing",
+      "target_endpoint": "POST /api/students/:id/photo",
+      "cwe": "CWE-434",
+      "version_0_behavior": {
+        "http_status": 200,
+        "payload_exposed": true,
+        "result": "Malicious PHP script disguised as 'avatar.png' with Content-Type: image/png stored on disk."
+      },
+      "version_2_behavior": {
+        "http_status": 400,
+        "payload_exposed": false,
+        "response_message": "Security Validation Failed: Uploaded file does not contain valid image binary magic bytes.",
+        "result": "Native Buffer header magic-byte inspection (JPEG/PNG/WebP) detected spoofed payload and unlinked file immediately."
+      },
+      "verification_status": "NEUTRALIZED_AND_VERIFIED"
+    },
+    {
+      "poc_id": "PoC-06",
+      "vulnerability_ref": "OBS-11",
+      "title": "Regular Expression Denial of Service (ReDoS) & Query Syntax Crash",
+      "target_endpoint": "GET /api/students?search=%28",
+      "cwe": "CWE-1333",
+      "version_0_behavior": {
+        "http_status": 500,
+        "payload_exposed": true,
+        "result": "Unterminated regex group '(' crashed Node.js process with unhandled SyntaxError."
+      },
+      "version_2_behavior": {
+        "http_status": 200,
+        "payload_exposed": false,
+        "response_time_ms": 6.4,
+        "result": "escapeRegex utility safely sanitized metacharacters; query executed as literal string in < 10 ms with 0 records returned."
+      },
+      "verification_status": "NEUTRALIZED_AND_VERIFIED"
+    }
+  ]
+}
